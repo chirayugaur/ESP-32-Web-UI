@@ -15,9 +15,9 @@
 #include <HTTPClient.h>
 
 // ----- User config -----
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
-const char* serverUrl = "http://YOUR_SERVER_IP:8000/data";
+const char* ssid = "Iphone 14 Plus";    //   Airtel_jai0_0281      Iphone 14 Plus 
+const char* password = "1234567890";       //    air95296               1234567890
+const char* serverUrl = "https://iot.om-mishra.com/data";
 
 #define I2C_ADDR 0x27
 LiquidCrystal_I2C lcd(I2C_ADDR, 16, 2);
@@ -70,16 +70,58 @@ void setup() {
 
   Serial.println("Initialization complete. Relay forced OFF.");
 
-  // Connect to WiFi
+  // -----------------------
+  // Wi-Fi connect (with LCD status)
+  // -----------------------
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Wi-Fi connecting");
+  lcd.setCursor(0,1);
+  lcd.print("Please wait...");
+
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
+
+  const unsigned long wifiTimeout = 20000UL; // 20 seconds timeout (adjust if you want)
+  unsigned long startAttemptTime = millis();
+
+  // Wait for connection with a visible progress on LCD and serial
+  while (WiFi.status() != WL_CONNECTED && (millis() - startAttemptTime) < wifiTimeout) {
     delay(500);
     Serial.print(".");
+    // add a simple animation on the LCD (dots)
+    static int dotCount = 0;
+    dotCount = (dotCount + 1) % 4;
+    lcd.setCursor(14,1);
+    for (int i = 0; i < 3; i++) lcd.print(' ');
+    lcd.setCursor(14,1);
+    for (int i = 0; i < dotCount; i++) lcd.print('.');
   }
-  Serial.println();
-  Serial.print("Connected! IP address: ");
-  Serial.println(WiFi.localIP());
+
+  if (WiFi.status() == WL_CONNECTED) {
+    IPAddress ip = WiFi.localIP();
+    Serial.println();
+    Serial.print("Connected! IP address: ");
+    Serial.println(ip);
+
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Wi-Fi connected");
+    lcd.setCursor(0,1);
+    lcd.print(ip.toString());
+    delay(1200); // short display before continuing
+  } else {
+    // Wi-Fi failed to connect in timeout
+    Serial.println();
+    Serial.println("WiFi connect timed out");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Wi-Fi connect");
+    lcd.setCursor(0,1);
+    lcd.print("FAILED");
+    // continue without blocking — the main loop checks WiFi before HTTP posts
+    delay(1200);
+  }
 }
 
 void setRelay(bool on) {
