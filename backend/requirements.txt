@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+motor
+python-dotenv
+# Optional: add dnspython if you use mongodb+srv URLs
+# dnspython
